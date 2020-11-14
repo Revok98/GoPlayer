@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 
 ''' This is a class to play small games of GO, natively coded in Python.
-    I tried to use nice data structures to speed it up (union & find, Zobrist hashs, 
+    I tried to use nice data structures to speed it up (union & find, Zobrist hashs,
     numpy memory efficient ...)
 
     Licence is MIT: you can do whatever you want with the code. But keep my name somewhere.
-    
+
     (c) Laurent SIMON 2019 -- 2020
 
     Known Limitations:
@@ -18,11 +18,11 @@
     --------------------------------
 
     I looked around in the web for inspiration. One important source of inspiration (some of my python lines
-    may be directly inspired by him is the fantastic github repo and book (which I bought :)) of Max Pumperla 
+    may be directly inspired by him is the fantastic github repo and book (which I bought :)) of Max Pumperla
     about Deep Learning and the game of Go
-    
-    https://github.com/maxpumperla/deep_learning_and_the_game_of_go 
-    
+
+    https://github.com/maxpumperla/deep_learning_and_the_game_of_go
+
     I tried to be faster by using more non python data structures (limiting lists and sets), however :)
 
     '''
@@ -33,7 +33,7 @@ import random
 
 def getProperRandom():
     ''' Gets a proper 64 bits random number (ints in Python are not the ideal toy to play with int64)'''
-    return np.random.randint(np.iinfo(np.int64).max, dtype='int64') 
+    return np.random.randint(np.iinfo(np.int64).max, dtype='int64')
 
 class Board:
     ''' GO Board class to implement your (simple) GO player.'''
@@ -42,7 +42,7 @@ class Board:
     _WHITE = 2
     _EMPTY = 0
     _BOARDSIZE = 9 # Used in static methods, do not write it
-    _DEBUG = False 
+    _DEBUG = False
 
     ##########################################################
     ##########################################################
@@ -54,10 +54,10 @@ class Board:
     @staticmethod
     def flatten(coord):
         ''' Static method that teturns the flatten (1D) coordinates given the 2D coordinates (x,y) on the board. It is a
-        simple helper function to get x*_BOARDSIZE + y. 
-        
+        simple helper function to get x*_BOARDSIZE + y.
+
         Internally, all the moves are flatten. If you use legal_moves or weak_legal_moves, it will produce flatten
-        coordinates.''' 
+        coordinates.'''
         if coord == (-1,-1): return -1
         return Board._BOARDSIZE * coord[1] + coord[0]
 
@@ -136,8 +136,8 @@ class Board:
       for x in range(Board._BOARDSIZE**2):
             for c in range(2):
                 self._positionHashes[x][c] = getProperRandom()
-      self._currentHash = getProperRandom() 
-      self._passHash = getProperRandom() 
+      self._currentHash = getProperRandom()
+      self._passHash = getProperRandom()
 
       self._seenHashes = set()
 
@@ -165,7 +165,7 @@ class Board:
 
     '''
     def __getitem__(self, key):
-        ''' Helper access to the board, from flatten coordinates (in [0 .. Board.BOARDSIZE**2]). 
+        ''' Helper access to the board, from flatten coordinates (in [0 .. Board.BOARDSIZE**2]).
         Read Only array. If you want to add a stone on the board, you have to use
         _put_stone().'''
         return self._board[key]
@@ -192,7 +192,7 @@ class Board:
         extremelly costly to check. Thus, you should use weak_legal_moves that does not check the superko and actually
         check the return value of the push() function that can return False if the move was illegal due to superKo.
         '''
-        moves = [m for m in self._empties if not self._is_suicide(m, self._nextPlayer) and 
+        moves = [m for m in self._empties if not self._is_suicide(m, self._nextPlayer) and
                 not self._is_super_ko(m, self._nextPlayer)[0]]
         moves.append(-1) # We can always ask to pass
         return moves
@@ -202,7 +202,7 @@ class Board:
         Produce a list of moves, ie flatten moves. They are integers representing the coordinates on the board. To get
         named Move (like A1, D5, ..., PASS) from these moves, you can use the function Board.flat_to_name(m).
         Can generate illegal moves, but only due to Super KO position. In this generator, KO are not checked.
-        If you use a move from this list, you have to check if push(m) was True or False and then immediatly pop 
+        If you use a move from this list, you have to check if push(m) was True or False and then immediatly pop
         it if it is False (meaning the move was superKO.'''
         moves = [m for m in self._empties if not self._is_suicide(m, self._nextPlayer)]
         moves.append(-1) # We can always ask to pass
@@ -213,7 +213,7 @@ class Board:
         return self.legal_moves()
 
     def move_to_str(self, m):
-        ''' Transform the internal representation of a move into a string. Simple wrapper, but useful for 
+        ''' Transform the internal representation of a move into a string. Simple wrapper, but useful for
         producing general code.'''
         return Board.flat_to_name(m)
 
@@ -223,18 +223,18 @@ class Board:
         return Board.name_to_flat(s)
 
     def play_move(self, fcoord):
-        ''' Main internal function to play a move. 
+        ''' Main internal function to play a move.
         Checks the superKo, put the stone then capture the other color's stones.
         Returns True if the move was ok, and False otherwise. If False is returned, there was no side effect.
         In particular, it checks the superKo that may not have been checked before.
-        
-        You can call it directly but the push/pop mechanism will not be able to undo it. Thus in general, 
+
+        You can call it directly but the push/pop mechanism will not be able to undo it. Thus in general,
         only push/pop are called and this method is never directly used.'''
-    
+
         if self._gameOver: return
         if fcoord != -1:  # pass otherwise
             alreadySeen, tmpHash = self._is_super_ko(fcoord, self._nextPlayer)
-            if alreadySeen: 
+            if alreadySeen:
                 self._historyMoveNames.append(self.flat_to_name(fcoord))
                 return False
             captured = self._put_stone(fcoord, self._nextPlayer)
@@ -260,7 +260,7 @@ class Board:
         self._historyMoveNames.append(self.flat_to_name(fcoord))
         self._nextPlayer = Board.flip(self._nextPlayer)
         return True
-    
+
     def next_player(self):
         return self._nextPlayer
 
@@ -269,8 +269,8 @@ class Board:
     ''' Helper functions for pushing/poping moves. You may want to use them in your game tree traversal'''
 
     def push(self, m):
-        ''' 
-        push: used to push a move on the board. More costly than play_move() 
+        '''
+        push: used to push a move on the board. More costly than play_move()
         but you can pop it after. Helper for your search tree algorithm'''
         assert not self._gameOver
         self._pushBoard()
@@ -278,7 +278,7 @@ class Board:
 
     def pop(self):
         '''
-        pop: another helper function for you rsearch tree algorithm. If a move has been pushed, 
+        pop: another helper function for you rsearch tree algorithm. If a move has been pushed,
         you can undo it by calling pop
         '''
         hashtopop = self._currentHash
@@ -291,7 +291,7 @@ class Board:
 
     def result(self):
         '''
-        The scoring mechanism is fixed but really costly. It may be not a good idea to use it as a heuristics. 
+        The scoring mechanism is fixed but really costly. It may be not a good idea to use it as a heuristics.
         It is the chinese area scoring that computes the final result. It uses the same notation as in chess:
         Returns:
         - "1-0" if WHITE wins
@@ -299,7 +299,7 @@ class Board:
         - "1/2-1/2" if DEUCE
 
 
-        Known problems: dead stones are not removed, so the score only stricly apply the area rules. You may want 
+        Known problems: dead stones are not removed, so the score only stricly apply the area rules. You may want
         to keep playing to consolidate your area before computing the scores.
         '''
         score = self._count_areas()
@@ -382,7 +382,7 @@ class Board:
         # In the union find structure, it is important to route all the nodes to the root
         # when querying the node. But in Python, using the successive array is really costly
         # so this is not so clear that we need to use the successive collection of nodes
-        # Moreover, not rerouting the nodes may help for backtracking on the structure 
+        # Moreover, not rerouting the nodes may help for backtracking on the structure
         successives = []
         while self._stringUnionFind[fcoord] != -1:
             fcoord = self._stringUnionFind[fcoord]
@@ -571,10 +571,10 @@ class Board:
                         touched_whites += 1
             # here we have gathered all the informations about an empty area
             assert len(currentstring) == ssize
-            assert touched_blacks > 0 or touched_whites > 0
-            if touched_blacks == 0:
+            assert (self._nbBLACK == 0 and self._nbWHITE == 0) or touched_blacks > 0 or touched_whites > 0
+            if touched_blacks == 0 and touched_whites > 0:
                 only_whites += ssize
-            elif touched_whites == 0:
+            elif touched_whites == 0 and touched_blacks > 0:
                 only_blacks += ssize
             else:
                 others += ssize
@@ -649,9 +649,9 @@ class Board:
     Internally, the board has a redundant information by keeping track of strings of stones.
     '''
     def _capture_string(self, fc):
-        # The Union and Find data structure can efficiently handle 
+        # The Union and Find data structure can efficiently handle
         # the string number of which the stone belongs to. However,
-        # to recover all the stones, given a string number, we must 
+        # to recover all the stones, given a string number, we must
         # search for them.
         string = self._breadthSearchString(fc)
         for s in string:
@@ -691,17 +691,17 @@ class Board:
         return toret
 
     def svg(self):
-        
+
         text_width=20
-        nb_cells = self._BOARDSIZE 
+        nb_cells = self._BOARDSIZE
         circle_width = 16
         border = 20
         width = 40
         wmax = str(width*(nb_cells-1) + border)
-        
+
         board ='<svg height="'+str(text_width+border*2+(nb_cells-1)*width)+'" '+\
         ' width="'+str(text_width+border*2+(nb_cells-1)*width)+'" > '
-        
+
         # The ABCD... line
         board += '<svg height="'+str(text_width)+'" width="' + str(text_width + border*2+(nb_cells-1)*width)+'">'
         letters = "ABCDEFGHJ"
@@ -711,7 +711,7 @@ class Board:
             il += 1
             #board += '<rect x=0 y=0 width=20 height=10 stroke="black" />'
         board += '</svg>'
-        
+
         # The line numbers
         il = 0
         board += '<svg width="'+str(text_width)+'" height="' + str(text_width + border*2+(nb_cells-1)*width)+'">'
@@ -720,8 +720,8 @@ class Board:
             il += 1
             #board += '<rect x=0 y=0 width=20 height=10 stroke="black" />'
         board += '</svg>'
-        
-        
+
+
         # The board by itself
         board += ' <svg x="'+str(text_width)+'" y="'+str(text_width)+'" height="' + \
         str(text_width+width*(nb_cells-1) + 2*border) + '" width="' + \
@@ -731,19 +731,19 @@ class Board:
         <line x1="' + wmax + '" y1="' + str(border) + '" x2="' + str(border) + '" y2="' + str(border) + '" stroke-width="4" stroke="black"/>\
         <line x1="' + wmax + '" y1="' + wmax + '" x2="' + wmax + '" y2="' + str(border) + '" stroke-width="4" stroke="black"/>\
         <line x1="' + str(border) + '" y1="' + wmax + '" x2="' + wmax + '" y2="' + wmax + '" stroke-width="4" stroke="black"/>'
-        
+
         board += self._draw_cross(border+4*width, border+4*width, width/3)
         board += self._draw_cross(border+2*width, border+2*width, width/3)
         board += self._draw_cross(border+6*width, border+6*width, width/3)
         board += self._draw_cross(border+2*width, border+6*width, width/3)
         board += self._draw_cross(border+6*width, border+2*width, width/3)
-    
+
         for i in range(border+width, width*(nb_cells-2)+2*border, width):
             board += '<line x1="'+str(i)+'" y1="'+str(border)+'" x2="'+str(i)+'" y2="' + wmax + '" stroke-width="2" stroke="#444444"/>'
             board += '<line y1="'+str(i)+'" x1="'+str(border)+'" y2="'+str(i)+'" x2="' + wmax + '" stroke-width="2" stroke="#444444"/>'
 
-            
-        # The stones    
+
+        # The stones
 
         pieces = [(x,y,self._board[Board.flatten((x,y))]) for x in range(self._BOARDSIZE) for y in range(self._BOARDSIZE) if
                 self._board[Board.flatten((x,y))] != Board._EMPTY]
@@ -756,5 +756,3 @@ class Board:
         board += '</svg></svg>'
         #'\    <text x="100" y="100" font-size="30" font-color="black"> Hello </text>\
         return board
-
-
