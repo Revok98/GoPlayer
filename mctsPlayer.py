@@ -33,7 +33,9 @@ class myPlayer(PlayerInterface):
             print("Referee told me to play but the game is over!")
             return "PASS"
 
+        start_time = time.time()
         move = self.tree.apply_mcts(self._board, 150, self._mycolor)
+        print(f"time {time.time() - start_time}")
         self.tree.relocate_root(self._board, move)
 
         self._board.push(move)

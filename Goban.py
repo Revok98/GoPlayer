@@ -155,6 +155,30 @@ class Board:
       self._neighborsEntries = np.array(self._neighborsEntries, dtype='int16')
       self._neighbors = np.array(self._neighbors, dtype='int8')
 
+    def copy(self):
+        b = Board()
+        b._nbBLACK = self._nbBLACK
+        b._nbWHITE = self._nbWHITE
+        b._capturedBLACK = self._capturedBLACK
+        b._capturedWHITE = self._capturedWHITE
+        b._nextPlayer = self._nextPlayer
+        b._board = np.copy(self._board)
+        b._lastPlayerHasPassed = self._lastPlayerHasPassed
+        b._gameOver = self._gameOver
+        b._stringUnionFind = np.copy(self._stringUnionFind)
+        b._stringLiberties = np.copy(self._stringLiberties)
+        b._stringSizes = np.copy(self._stringSizes)
+        b._empties = self._empties.copy()
+        b._positionHashes = np.copy(self._positionHashes)
+        b._currentHash = self._currentHash
+        b._passHash = self._passHash
+        b._seenHashes = self._seenHashes.copy()
+        b._historyMoveNames = self._historyMoveNames.copy()
+        b._trailMoves = self._trailMoves.copy()
+        b._neighbors = np.copy(self._neighbors)
+        b._neighborsEntries = np.copy(self._neighborsEntries)
+        return b
+
     ##########################################################
     ##########################################################
     ''' Simple helper function to directly access the board.

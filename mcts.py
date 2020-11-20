@@ -90,6 +90,7 @@ class MCTS_TREE:
 
     def apply_mcts(self, game, iterations, color):
         for _ in range(iterations):
+            #game = original_game.copy()
             n = self.root.selection(game)
             n = n.expansion(game)
             reward = n.rollout(game, color)
