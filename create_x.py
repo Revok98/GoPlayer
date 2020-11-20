@@ -1,4 +1,3 @@
-import tensorflow as tf
 import numpy as np
 import Goban
 
@@ -27,17 +26,17 @@ def encoder(data, len_hist):
         return list() # erreur pas assez pour cette taille d'historique
     boards = list()
     for i in range(len(moves)) :
-        board.push(moves[i])
+        board.push(board.flatten(board.name_to_coord(moves[i])))
         if len(moves) - i < len_hist:
             B = np.zeros((9, 9))
             W = np.zeros((9, 9))
             for x in range(9):
-                for j in range(9):
-                    c = board._board[board.flatten((i,j))]
+                for y in range(9):
+                    c = board._board[board.flatten((x,y))]
                     if c == board._BLACK:
-                        B[i,j] = 1
+                        B[x,y] = 1
                     elif c == board._WHITE:
-                        W[i,j] = 1
+                        W[x,y] = 1
             boards += [B,W]
     if len(moves) % 2 == 0:
         boards.append(np.zeros((9,9)))
@@ -70,12 +69,13 @@ def create_all_x():
 
 
 ################################################################################
-def game():
-    model = tf.keras.models.load_model('model.h5')
-    # 8 x conv(3,3,64) + flatten + dense?
-    x = encoder(board)
-    y = model.predict(x)
-    moves = board.legal_moves()
-    probas = softmax([y[move] for move in moves])
-    # coup à jouer
-    move = np.random.choice(moves, p=probas)
+# def game():
+#     import tensorflow as tf
+#     model = tf.keras.models.load_model('model.h5')
+#     # 8 x conv(3,3,64) + flatten + dense?
+#     x = encoder(board)
+#     y = model.predict(x)
+#     moves = board.legal_moves()
+#     probas = softmax([y[move] for move in moves])
+#     # coup à jouer
+#     move = np.random.choice(moves, p=probas)
