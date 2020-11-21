@@ -1,5 +1,8 @@
 from GnuGo import *
 import numpy as np
+import random as rd
+import json
+import os
 #board = Board()
 #board.prettyPrint()
 #for m in "D4 E4 D3 E5 E6 E7 D2 F6 G7 D6 B2 F5 B3 G5 C2 G6 C3".split():
@@ -34,14 +37,18 @@ def monte_carlo(gnugo, moves, nbsamples = 100):
     probaB = np.zeros((9,9))
     probaW = np.zeros((9,9))
     while epochs < nbsamples:
-        #print(epochs)
         isfirstmove = True
         while True:
-            m = moves.get_randomized_best()
-            #print(epochs, m)
-            if isfirstmove:
+            if isfirstmove:#Pour le premier move on l'oblige à le faire de manière random pour bien explorer
+                line = rd.randint(1,9)
+                column = rd.randint(1,9)
+                if (line == 9):#On remplace I par J
+                    line +=1
+                m = str(chr(ord('@')+line))+str(column)
                 firstmove = m
                 isfirstmove = False
+            else:
+                m = moves.get_randomized_best()
             r = moves.playthis(m)
             if r == "RES":
                 return None
@@ -69,9 +76,7 @@ def monte_carlo(gnugo, moves, nbsamples = 100):
         epochs += 1
     probaB = np.divide(nb_victoryB, nb_seen,out=np.zeros_like(nb_victoryB), where=nb_seen!=0)
     probaW = np.divide(nb_victoryW, nb_seen,out=np.zeros_like(nb_victoryW), where=nb_seen!=0)
-    print(probaB)
-    print(probaW)
-    return epochs, toret, black_wins, white_wins, black_points, white_points
+    return epochs, toret, black_wins, white_wins, black_points, white_points, probaB.tolist(), probaW.tolist() #tolist parce json n'aime pas les array numpy
 
 def doit():
 #(ok, _) = gnugo.query("set_random_seed 1234")
@@ -109,14 +114,22 @@ def doit():
     (ok, whitestones) = gnugo.query('list_stones white')
     whitestones = whitestones.strip().split()
 
-    (epochs, scores, black_wins, white_wins, black_points, white_points) = monte_carlo(gnugo, moves, 100)
+    (epochs, scores, black_wins, white_wins, black_points, white_points, probaB, probaW) = monte_carlo(gnugo, moves, 200)
     summary = {"depth": len(list_of_moves), "list_of_moves": list_of_moves,
             "black_stones":blackstones, "white_stones": whitestones,
             "rollouts":epochs,
             #"detailed_results": scores,
-            "black_wins":black_wins, "black_points": black_points,
-            "white_wins":white_wins, "white_points":white_points}
+            "black_wins":black_wins, "black_points":black_points,"proba_black_wins":probaB,
+            "white_wins":white_wins, "white_points":white_points,"proba_white_wins":probaW}
     print(summary)
+    with open('data.json', 'r') as outfile:
+        if (os.stat("data.json").st_size != 0):
+            data = json.load(outfile)  # deserialization
+            data.append(summary)
+        else:
+            data = [summary]
+    with open('data.json', 'w') as outfile:
+        json.dump(data, outfile)
     (ok, _) = gnugo.query("quit")
 
 #print(gnugo.finalScore())
