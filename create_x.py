@@ -19,15 +19,22 @@ def get_raw_data_go():
         data = json.loads(fz.read().decode("utf-8"))
     return data
 
+rejected = 0
+
 def encoder(data, len_hist):
+    global rejected
     board = Goban.Board()
     moves = data["list_of_moves"]
     if len_hist > len(moves):
         return list() # erreur pas assez pour cette taille d'historique
     boards = list()
     for i in range(len(moves)) :
-        board.push(board.flatten(board.name_to_coord(moves[i])))
-        if len(moves) - i < len_hist:
+        try:
+            board.push(board.flatten(board.name_to_coord(moves[i])))
+        except Exception as var:
+            rejected += 1
+            return list()
+        if len(moves) - i <= len_hist:
             B = np.zeros((9, 9))
             W = np.zeros((9, 9))
             for x in range(9):
@@ -56,17 +63,20 @@ def symetries_rotations(x):
     new.append([np.flipud(b) for b in new[-1]])
     return new
 
-def reshape(x):
+def reshape(x, len_hist):
     return np.array(x).reshape((9,9,2*len_hist+1))
 
 def create_all_x():
     len_hist = 7
     data = get_raw_data_go()
     all = list()
-    for b in [encoder(d, 7) for d in data]:
+    tmp = [x for x in [encoder(d, 7) for d in data] if len(x) != 0]
+    print(f"{rejected} parties rejetées par le goban, reste {len(tmp)} parties")
+    for b in tmp:
         all += symetries_rotations(b)
-    return [reshape(x) for x in all]
+    return [reshape(x, len_hist) for x in all]
 
+x = create_all_x()
 
 ################################################################################
 # def game():
