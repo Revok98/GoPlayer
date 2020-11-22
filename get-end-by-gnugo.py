@@ -34,6 +34,8 @@ def monte_carlo(gnugo, moves, nbsamples = 100):
     nb_victory = np.zeros((9,9))
     nb_seen = np.zeros((9,9))
     proba_win = np.zeros((9,9))
+    pass_seen = 0
+    pass_victory = 0
     player = moves.player()
     while epochs < nbsamples:
         isfirstmove = True
@@ -41,9 +43,13 @@ def monte_carlo(gnugo, moves, nbsamples = 100):
             if isfirstmove:#Pour le premier move on l'oblige à le faire de manière random pour bien explorer
                 line = rd.randint(1,9)
                 column = rd.randint(1,9)
+                random_pass = rd.randint(1,82)
                 if (line == 9):#On remplace I par J
                     line +=1
-                m = str(chr(ord('@')+line))+str(column)
+                if random_pass == 82:
+                    m = "PASS"
+                else:
+                    m = str(chr(ord('@')+line))+str(column)
                 firstmove = m
                 isfirstmove = False
             else:
@@ -56,25 +62,35 @@ def monte_carlo(gnugo, moves, nbsamples = 100):
                 break
         if firstmove != "PASS":
             nb_seen[name_to_coord(firstmove)] += 1
+        else:
+            pass_seen += 1
         score = gnugo.finalScore()
         toret.append(score)
         if score[0] == "W":
             white_wins += 1
             if firstmove != "PASS" and player == "white":
                 nb_victory[name_to_coord(firstmove)] += 1
+            elif firstmove == "PASS" and player == "white":
+                pass_victory += 1
             if score[1] == "+":
                 white_points += float(score[2:])
         elif score[0] == "B":
             black_wins += 1
             if firstmove != "PASS" and player == "black":
                 nb_victory[name_to_coord(firstmove)] += 1
+            elif firstmove == "PASS" and player == "black":
+                pass_victory += 1
             if score[1] == "+":
                 black_points += float(score[2:])
         (ok, res) = gnugo.query("gg-undo " + str(len(list_of_moves)))
         list_of_moves = []
         epochs += 1
     proba_win = np.divide(nb_victory, nb_seen,out=np.zeros_like(nb_victory), where=nb_seen!=0)
-    return epochs, toret, black_wins, white_wins, black_points, white_points, proba_win.tolist(),player #tolist parce json n'aime pas les array numpy
+    if pass_seen != 0:
+        proba_pass = pass_victory/pass_seen
+    else:
+        proba_pass = 0
+    return epochs, toret, black_wins, white_wins, black_points, white_points, proba_win.tolist(),proba_pass,player #tolist parce json n'aime pas les array numpy
 
 def doit():
 #(ok, _) = gnugo.query("set_random_seed 1234")
@@ -112,13 +128,13 @@ def doit():
     (ok, whitestones) = gnugo.query('list_stones white')
     whitestones = whitestones.strip().split()
 
-    (epochs, scores, black_wins, white_wins, black_points, white_points, proba_win, player) = monte_carlo(gnugo, moves, 200)
+    (epochs, scores, black_wins, white_wins, black_points, white_points, proba_win, proba_pass, player) = monte_carlo(gnugo, moves, 500)
     summary = {"depth": len(list_of_moves), "list_of_moves": list_of_moves,
             "black_stones":blackstones, "white_stones": whitestones,
             "rollouts":epochs,
             #"detailed_results": scores,
             "black_wins":black_wins, "black_points":black_points,
-            "white_wins":white_wins, "white_points":white_points,"proba_wins":proba_win, "player":player}
+            "white_wins":white_wins, "white_points":white_points,"proba_wins":proba_win,"proba_win_pass":proba_pass, "player":player}
     print(summary)
     with open('data.json', 'r') as outfile:
         if (os.stat("data.json").st_size != 0):
@@ -134,5 +150,5 @@ def doit():
 # 15 minutes max par run avant de lancer le dernier
 import time
 t=time.time()
-while (time.time() - t < 60*60): # une heure
+while (time.time() - t < 20*60*60): # une heure
     doit()
