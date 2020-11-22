@@ -3,20 +3,13 @@ import Goban
 
 
 def get_raw_data_go():
-    ''' Returns the set of samples from the local file or download it if it does not exists'''
-    import gzip, os.path
+    ''' Returns the set of samples from the local file'''
     import json
 
-    raw_samples_file = "samples-9x9.json.gz"
+    raw_samples_file = "data.json"
 
-    if not os.path.isfile(raw_samples_file):
-        print("File", raw_samples_file, "not found, I am downloading it...", end="")
-        import urllib.request
-        urllib.request.urlretrieve ("https://www.labri.fr/perso/lsimon/ia-inge2/samples-9x9.json.gz", "samples-9x9.json.gz")
-        print(" Done")
-
-    with gzip.open("samples-9x9.json.gz") as fz:
-        data = json.loads(fz.read().decode("utf-8"))
+    with open(raw_samples_file, "r") as f:
+        data = json.loads(f.read())
     return data
 
 rejected = 0
@@ -49,6 +42,7 @@ def encoder(data, len_hist):
         boards.append(np.zeros((9,9)))
     else:
         boards.append(np.ones((9,9)))
+    boards.append(np.array(data["proba_wins"]))
     return boards
 
 def symetries_rotations(x):
@@ -66,7 +60,7 @@ def symetries_rotations(x):
 def reshape(x, len_hist):
     return np.array(x).reshape((9,9,2*len_hist+1))
 
-def create_all_x():
+def create_all_x_y():
     len_hist = 7
     data = get_raw_data_go()
     all = list()
@@ -74,9 +68,9 @@ def create_all_x():
     print(f"{rejected} parties rejetées par le goban, reste {len(tmp)} parties")
     for b in tmp:
         all += symetries_rotations(b)
-    return [reshape(x, len_hist) for x in all]
-
-x = create_all_x()
+    X = [x[:-1] for x in all]
+    Y = [y[-1] for y in all]
+    return [reshape(x, len_hist) for x in X], Y
 
 ################################################################################
 # def game():
