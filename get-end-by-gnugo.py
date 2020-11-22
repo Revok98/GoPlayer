@@ -31,11 +31,10 @@ def monte_carlo(gnugo, moves, nbsamples = 100):
     white_wins = 0
     black_points = 0
     white_points = 0
-    nb_victoryB = np.zeros((9,9))
-    nb_victoryW = np.zeros((9,9))
+    nb_victory = np.zeros((9,9))
     nb_seen = np.zeros((9,9))
-    probaB = np.zeros((9,9))
-    probaW = np.zeros((9,9))
+    proba_win = np.zeros((9,9))
+    player = moves.player()
     while epochs < nbsamples:
         isfirstmove = True
         while True:
@@ -61,22 +60,21 @@ def monte_carlo(gnugo, moves, nbsamples = 100):
         toret.append(score)
         if score[0] == "W":
             white_wins += 1
-            if firstmove != "PASS":
-                nb_victoryW[name_to_coord(firstmove)] += 1
+            if firstmove != "PASS" and player == "white":
+                nb_victory[name_to_coord(firstmove)] += 1
             if score[1] == "+":
                 white_points += float(score[2:])
         elif score[0] == "B":
             black_wins += 1
-            if firstmove != "PASS":
-                nb_victoryB[name_to_coord(firstmove)] += 1
+            if firstmove != "PASS" and player == "black":
+                nb_victory[name_to_coord(firstmove)] += 1
             if score[1] == "+":
                 black_points += float(score[2:])
         (ok, res) = gnugo.query("gg-undo " + str(len(list_of_moves)))
         list_of_moves = []
         epochs += 1
-    probaB = np.divide(nb_victoryB, nb_seen,out=np.zeros_like(nb_victoryB), where=nb_seen!=0)
-    probaW = np.divide(nb_victoryW, nb_seen,out=np.zeros_like(nb_victoryW), where=nb_seen!=0)
-    return epochs, toret, black_wins, white_wins, black_points, white_points, probaB.tolist(), probaW.tolist() #tolist parce json n'aime pas les array numpy
+    proba_win = np.divide(nb_victory, nb_seen,out=np.zeros_like(nb_victory), where=nb_seen!=0)
+    return epochs, toret, black_wins, white_wins, black_points, white_points, proba_win.tolist(),player #tolist parce json n'aime pas les array numpy
 
 def doit():
 #(ok, _) = gnugo.query("set_random_seed 1234")
@@ -114,13 +112,13 @@ def doit():
     (ok, whitestones) = gnugo.query('list_stones white')
     whitestones = whitestones.strip().split()
 
-    (epochs, scores, black_wins, white_wins, black_points, white_points, probaB, probaW) = monte_carlo(gnugo, moves, 200)
+    (epochs, scores, black_wins, white_wins, black_points, white_points, proba_win, player) = monte_carlo(gnugo, moves, 200)
     summary = {"depth": len(list_of_moves), "list_of_moves": list_of_moves,
             "black_stones":blackstones, "white_stones": whitestones,
             "rollouts":epochs,
             #"detailed_results": scores,
-            "black_wins":black_wins, "black_points":black_points,"proba_black_wins":probaB,
-            "white_wins":white_wins, "white_points":white_points,"proba_white_wins":probaW}
+            "black_wins":black_wins, "black_points":black_points,
+            "white_wins":white_wins, "white_points":white_points,"proba_wins":proba_win, "player":player}
     print(summary)
     with open('data.json', 'r') as outfile:
         if (os.stat("data.json").st_size != 0):
