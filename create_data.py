@@ -43,18 +43,20 @@ def encoder(data, len_hist):
     else:
         boards.append(np.ones((9,9)))
     boards.append(np.array(data["proba_wins"]))
+    boards.append(data["proba_win_pass"])
     return boards
 
 def symetries_rotations(x):
     new = list()
     new.append(x)
-    new.append([np.flipud(b) for b in new[-1]])
-    new.append([np.rot90(b) for b in new[-2]])
-    new.append([np.flipud(b) for b in new[-1]])
-    new.append([np.rot90(b) for b in new[-2]])
-    new.append([np.flipud(b) for b in new[-1]])
-    new.append([np.rot90(b) for b in new[-2]])
-    new.append([np.flipud(b) for b in new[-1]])
+    # [:-1] sauf le dernier car c'est pas un board, c'est PASS
+    new.append([np.flipud(b) for b in new[-1][:-1]] + [new[-1][-1]])
+    new.append([np.rot90(b) for b in new[-2][:-1]] + [new[-2][-1]])
+    new.append([np.flipud(b) for b in new[-1][:-1]] + [new[-1][-1]])
+    new.append([np.rot90(b) for b in new[-2][:-1]] + [new[-2][-1]])
+    new.append([np.flipud(b) for b in new[-1][:-1]] + [new[-1][-1]])
+    new.append([np.rot90(b) for b in new[-2][:-1]] + [new[-2][-1]])
+    new.append([np.flipud(b) for b in new[-1][:-1]] + [new[-1][-1]])
     return new
 
 def reshape(x, len_hist):
@@ -68,9 +70,9 @@ def create_all_x_y():
     print(f"{rejected} parties rejetées par le goban, reste {len(tmp)} parties")
     for b in tmp:
         all += symetries_rotations(b)
-    X = [x[:-1] for x in all]
-    Y = [y[-1] for y in all]
-    return [reshape(x, len_hist) for x in X], Y
+    X = [x[:-2] for x in all]
+    Y = [np.concatenate((y[-2].reshape((81,)), [y[-1]])) for y in all]
+    return np.array([reshape(x, len_hist) for x in X]), np.array(Y)
 
 ################################################################################
 # def game():
