@@ -30,6 +30,7 @@ def encoder(data, len_hist):
         if len(moves) - i <= len_hist:
             B = np.zeros((9, 9))
             W = np.zeros((9, 9))
+            lib = [np.zeros((9,9)) for _ in range(4)]
             for x in range(9):
                 for y in range(9):
                     c = board._board[board.flatten((x,y))]
@@ -37,11 +38,13 @@ def encoder(data, len_hist):
                         B[x,y] = 1
                     elif c == board._WHITE:
                         W[x,y] = 1
-            boards += [B,W]
-    if len(moves) % 2 == 0:
-        boards.append(np.zeros((9,9)))
-    else:
-        boards.append(np.ones((9,9)))
+                    l = min(board._stringLiberties[board.flatten((x,y))], 3)
+                    lib[l][x,y] = 1
+            boards += [B,W] + lib
+            if i % 2 == 0:
+                boards.append(np.zeros((9,9)))
+            else:
+                boards.append(np.ones((9,9)))
     boards.append(np.array(data["proba_wins"]))
     boards.append(data["proba_win_pass"])
     return boards
@@ -60,7 +63,7 @@ def symetries_rotations(x):
     return new
 
 def reshape(x, len_hist):
-    return np.array(x).reshape((9,9,2*len_hist+1))
+    return np.array(x).reshape((9,9,7*len_hist))
 
 def create_all_x_y():
     len_hist = 7
