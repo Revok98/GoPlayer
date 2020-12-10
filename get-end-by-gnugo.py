@@ -136,7 +136,7 @@ def doit():
             "black_wins":black_wins, "black_points":black_points,
             "white_wins":white_wins, "white_points":white_points,"proba_wins":proba_win,"proba_win_pass":proba_pass, "player":player}
     print(summary)
-    with open('data.json', 'r') as outfile:
+    with open('data/data.json', 'r') as outfile:
         if (os.stat("data.json").st_size != 0):
             data = json.load(outfile)  # deserialization
             data.append(summary)
