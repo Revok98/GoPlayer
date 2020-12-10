@@ -128,7 +128,7 @@ def doit():
     (ok, whitestones) = gnugo.query('list_stones white')
     whitestones = whitestones.strip().split()
 
-    (epochs, scores, black_wins, white_wins, black_points, white_points, proba_win, proba_pass, player) = monte_carlo(gnugo, moves, 500)
+    (epochs, scores, black_wins, white_wins, black_points, white_points, proba_win, proba_pass, player) = monte_carlo(gnugo, moves, 600)
     summary = {"depth": len(list_of_moves), "list_of_moves": list_of_moves,
             "black_stones":blackstones, "white_stones": whitestones,
             "rollouts":epochs,
