@@ -6,7 +6,7 @@ def get_raw_data_go():
     ''' Returns the set of samples from the local file'''
     import json
 
-    raw_samples_file = "data.json"
+    raw_samples_file = "data/data.json"
 
     with open(raw_samples_file, "r") as f:
         data = json.loads(f.read())
@@ -76,7 +76,6 @@ def create_all_x_y():
     X = [x[:-2] for x in all]
     Y = [np.concatenate((y[-2].reshape((81,)), [y[-1]])) for y in all]
     return np.array([reshape(x, len_hist) for x in X]), np.array(Y)
-
 ################################################################################
 # def game():
 #     import tensorflow as tf
