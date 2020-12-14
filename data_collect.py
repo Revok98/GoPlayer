@@ -25,10 +25,8 @@ def play_a_game(player1, player2):
         # save the move as chosen action
         actions.append(Goban.Board.name_to_flat(move))
         if not Goban.Board.name_to_flat(move) in legals:
-            print(otherplayer, nextplayer, nextplayercolor)
-            print("Problem: illegal move")
-            wrongmovefrom = nextplayercolor
-            break
+            # illegal move
+            return None, None, None
         b.push(Goban.Board.name_to_flat(move))
         players[otherplayer].playOpponentMove(move)
         nextplayer = otherplayer
@@ -36,17 +34,12 @@ def play_a_game(player1, player2):
     [p.endGame(None) for p in players]
 
     result = b.result()
-    winner = -1
-    if wrongmovefrom > 0:
-        if wrongmovefrom == b._WHITE: winner = 0
-        elif wrongmovefrom == b._BLACK: winner = 1
-        else: print("ERROR")
-    elif result == "1-0": winner = 1
+    if result == "1-0": winner = 1
     elif result == "0-1": winner = 0
-    else: print("DEUCE")
+    else: winner = -1
 
     # give reward
-    rewards = [(-1)**(n+winner) for n in range(len(actions))]
+    rewards = [(-1)**(n+winner) for n in range(len(actions))] if winner != -1 else [0]*len(actions)
     return states, actions, rewards
 
 ################################################################################
@@ -57,11 +50,11 @@ for i in range(N_GAME):
     player1 = gnugoPlayer.myPlayer()
     player2 = gnugoPlayer.myPlayer()
     states, actions, rewards = play_a_game(player1, player2)
-    for s, a, r in zip(states, actions, rewards):
-        data.append({'state': s.tolist(), 'action': a, 'reward': r})
+    if states is not None: # si la partie est viable
+        for s, a, r in zip(states, actions, rewards):
+            data.append({'state': s.tolist(), 'action': a, 'reward': r})
     if i % (N_GAME/100) == 0:
         print('.', end='', flush=True) # avancement
-
 
 # save data
 print() # pour remettre proprement à la ligne :)
