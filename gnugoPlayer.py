@@ -27,7 +27,7 @@ class myPlayer(PlayerInterface):
         (ok, legal) = self._gnugo.query("all_legal " + Goban.Board.player_name(self._board._nextPlayer))
         #print("GNUGO Legal Moves are ", legal[1:])
 
-        move = self._moves.getbest()
+        move = self._moves.get_randomized_best()
         #print("I am playing ", move) # New here: allows to consider internal representations of
         self._board.push(Goban.Board.name_to_flat(move))
         self._moves.playthis(move)
@@ -46,7 +46,4 @@ class myPlayer(PlayerInterface):
         self._opponent = Goban.Board.flip(color)
 
     def endGame(self, winner):
-        if self._mycolor == winner:
-            print("I won!!!")
-        else:
-            print("I lost :(!!")
+        self._gnugo.query("quit")
