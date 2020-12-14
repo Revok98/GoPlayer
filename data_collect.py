@@ -50,16 +50,13 @@ def play_a_game(player1, player2):
     return states, actions, rewards
 
 ################################################################################
-N_GAME = 5
+N_GAME = 5000
 
 data = list()
 for i in range(N_GAME):
     player1 = gnugoPlayer.myPlayer()
     player2 = gnugoPlayer.myPlayer()
     states, actions, rewards = play_a_game(player1, player2)
-    print(f"{len(states)} plateaux")
-    print(actions[0])
-    print(actions[1])
     for s, a, r in zip(states, actions, rewards):
         data.append({'state': s.tolist(), 'action': a, 'reward': r})
     if i % (N_GAME/100) == 0:
