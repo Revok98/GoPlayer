@@ -137,12 +137,12 @@ def doit():
             "white_wins":white_wins, "white_points":white_points,"proba_wins":proba_win,"proba_win_pass":proba_pass, "player":player}
     print(summary)
     with open("data/data.json", 'r') as outfile:
-        if (os.stat("data.json").st_size != 0):
+        if (os.stat("data/data.json").st_size != 0):
             data = json.load(outfile)  # deserialization
             data.append(summary)
         else:
             data = [summary]
-    with open('data.json', 'w') as outfile:
+    with open('data/data.json', 'w') as outfile:
         json.dump(data, outfile)
     (ok, _) = gnugo.query("quit")
 
