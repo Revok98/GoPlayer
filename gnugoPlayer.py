@@ -41,6 +41,10 @@ class myPlayer(PlayerInterface):
         self._board.push(Goban.Board.name_to_flat(move))
         self._moves.playthis(move)
 
+    def back(self):
+        self._board.pop()
+        self._moves.back()
+
     def newGame(self, color):
         self._mycolor = color
         self._opponent = Goban.Board.flip(color)
