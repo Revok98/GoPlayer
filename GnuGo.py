@@ -42,7 +42,7 @@ class GnuGo():
         return ret[0][2:]
 
     class Moves():
-        
+
         def __init__(self, gnugo):
             self._nextplayer = "black"
             self._gnugo = gnugo
@@ -114,6 +114,10 @@ class GnuGo():
                 return toret.strip()
             return "ERR"
 
+        def back(self):
+            self._gnugo.qurey("gg-undo "+str(1))
+            self.flip()
+
     def __init__(self, size):
         self._proc = subprocess.Popen(['gnugo', '--capture-all-dead', '--chinese-rules', '--boardsize',str(size), '--mode', 'gtp', '--never-resign', '--seed', '0'], bufsize = 1, stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE, universal_newlines=True)
@@ -135,4 +139,3 @@ class GnuGo():
         (ok, legal) = self.query("all_legal black")
         assert ok=='OK'
         #print("Legal moves: ", legal)
-        

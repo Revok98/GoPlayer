@@ -70,5 +70,5 @@ for i in range(N_GAME):
 # save data
 print() # pour remettre proprement à la ligne :)
 print(f"{len(data)} plateaux joués sur {N_GAME} parties")
-with open('data/experience-replay.json', 'w') as outfile:
+with open('data/experience-replay-rewards.json', 'w') as outfile:
     json.dump(data, outfile)
