@@ -27,10 +27,7 @@ def monte_carlo(gnugo, moves, nbsamples = 100):
     #    return None # FIXME
     epochs = 0 # Number of played games
     toret = []
-    black_wins = 0
-    white_wins = 0
-    black_points = 0
-    white_points = 0
+    player_wins = 0
     nb_victory = np.zeros((9,9))
     nb_seen = np.zeros((9,9))
     proba_win = np.zeros((9,9))
@@ -41,16 +38,17 @@ def monte_carlo(gnugo, moves, nbsamples = 100):
         isfirstmove = True
         while True:
             if isfirstmove:#Pour le premier move on l'oblige à le faire de manière random pour bien explorer
-                line = rd.randint(1,9)
-                column = rd.randint(1,9)
-                random_pass = rd.randint(1,82)
+                move_epoch = epochs%82
+                line = (move_epoch-1)//9 + 1
+                column = (move_epoch-1)%9 + 1
                 if (line == 9):#On remplace I par J
                     line +=1
-                if random_pass == 82:
+                if epochs % 82 == 0:
                     m = "PASS"
                 else:
                     m = str(chr(ord('@')+line))+str(column)
                 firstmove = m
+                print(m)
                 isfirstmove = False
             else:
                 m = moves.get_randomized_best()
@@ -65,32 +63,31 @@ def monte_carlo(gnugo, moves, nbsamples = 100):
         else:
             pass_seen += 1
         score = gnugo.finalScore()
-        toret.append(score)
-        if score[0] == "W":
-            white_wins += 1
+        #toret.append(score)
+        if player == "white" and score[0] == "W":
+            player_wins += 1
             if firstmove != "PASS" and player == "white":
                 nb_victory[name_to_coord(firstmove)] += 1
             elif firstmove == "PASS" and player == "white":
                 pass_victory += 1
-            if score[1] == "+":
-                white_points += float(score[2:])
-        elif score[0] == "B":
-            black_wins += 1
+        elif player == "black" and score[0] == "B":
+            player_wins += 1
             if firstmove != "PASS" and player == "black":
                 nb_victory[name_to_coord(firstmove)] += 1
             elif firstmove == "PASS" and player == "black":
                 pass_victory += 1
-            if score[1] == "+":
-                black_points += float(score[2:])
         (ok, res) = gnugo.query("gg-undo " + str(len(list_of_moves)))
         list_of_moves = []
         epochs += 1
     proba_win = np.divide(nb_victory, nb_seen,out=np.zeros_like(nb_victory), where=nb_seen!=0)
+
     if pass_seen != 0:
         proba_pass = pass_victory/pass_seen
     else:
         proba_pass = 0
-    return epochs, toret, black_wins, white_wins, black_points, white_points, proba_win.tolist(),proba_pass,player #tolist parce json n'aime pas les array numpy
+    proba_win = proba_win.reshape(81).tolist()
+    proba_win.append(proba_pass)
+    return player_wins/epochs, proba_win,proba_pass,player #tolist parce json n'aime pas les array numpy
 
 def doit():
 #(ok, _) = gnugo.query("set_random_seed 1234")
@@ -128,21 +125,19 @@ def doit():
     (ok, whitestones) = gnugo.query('list_stones white')
     whitestones = whitestones.strip().split()
 
-    (epochs, scores, black_wins, white_wins, black_points, white_points, proba_win, proba_pass, player) = monte_carlo(gnugo, moves, 600)
-    summary = {"depth": len(list_of_moves), "list_of_moves": list_of_moves,
-            "black_stones":blackstones, "white_stones": whitestones,
-            "rollouts":epochs,
+    (player_wins, proba_win, proba_pass, player) = monte_carlo(gnugo, moves, 410)
+    summary = {"list_of_moves": list_of_moves,
             #"detailed_results": scores,
-            "black_wins":black_wins, "black_points":black_points,
-            "white_wins":white_wins, "white_points":white_points,"proba_wins":proba_win,"proba_win_pass":proba_pass, "player":player}
+            "proba_win":player_wins,
+            "proba_next_move":proba_win, "player":player}
     print(summary)
-    with open("data/data.json", 'r') as outfile:
+    with open("data/new_data.json", 'r') as outfile:
         if (os.stat("data/data.json").st_size != 0):
             data = json.load(outfile)  # deserialization
             data.append(summary)
         else:
             data = [summary]
-    with open('data/data.json', 'w') as outfile:
+    with open('data/new_data.json', 'w') as outfile:
         json.dump(data, outfile)
     (ok, _) = gnugo.query("quit")
 
