@@ -1,6 +1,7 @@
 """
 génére un fichier json avec:
 {state: Vec82(board), m: Vec82(moyenne des victoires de gnugo)}
+mais c'est trop long ~ 1 plateau / minute
 """
 
 

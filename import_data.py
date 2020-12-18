@@ -27,7 +27,6 @@ def encoder(data):
             return list()
     B = np.zeros((9, 9))
     W = np.zeros((9, 9))
-    lib = [np.zeros((9,9)) for _ in range(4)]
     for x in range(9):
         for y in range(9):
             c = board._board[board.flatten((x,y))]
@@ -38,22 +37,22 @@ def encoder(data):
     boards += [B,W]
     if len(moves) % 2 == 0: boards.append(np.zeros((9,9)))
     else: boards.append(np.ones((9,9)))
-    boards.append(np.array(data["proba_wins"]))
-    boards.append(data["proba_win_pass"])
-    boards.append(data["black_wins"] / 600)
+    boards.append(np.array(data["proba_next_move"][:-1]).reshape((9,9)))
+    boards.append(data["proba_next_move"][-1])
+    boards.append(data["proba_win"])
     return boards
 
 def symetries_rotations(x):
     new = list()
     new.append(x)
     # [:-1] sauf le dernier car c'est pas un board, c'est PASS
-    new.append([np.flipud(b) for b in new[-1][:-2]] + [new[-1][-2:]])
-    new.append([np.rot90(b) for b in new[-2][:-2]] + [new[-2][-2:]])
-    new.append([np.flipud(b) for b in new[-1][:-2]] + [new[-1][-2:]])
-    new.append([np.rot90(b) for b in new[-2][:-2]] + [new[-2][-2:]])
-    new.append([np.flipud(b) for b in new[-1][:-2]] + [new[-1][-2:]])
-    new.append([np.rot90(b) for b in new[-2][:-2]] + [new[-2][-2:]])
-    new.append([np.flipud(b) for b in new[-1][:-2]] + [new[-1][-2:]])
+    new.append([np.flipud(b) for b in new[-1][:-2]] + new[-1][-2:])
+    new.append([np.rot90(b) for b in new[-2][:-2]] + new[-2][-2:])
+    new.append([np.flipud(b) for b in new[-1][:-2]] + new[-1][-2:])
+    new.append([np.rot90(b) for b in new[-2][:-2]] + new[-2][-2:])
+    new.append([np.flipud(b) for b in new[-1][:-2]] + new[-1][-2:])
+    new.append([np.rot90(b) for b in new[-2][:-2]] + new[-2][-2:])
+    new.append([np.flipud(b) for b in new[-1][:-2]] + new[-1][-2:])
     return new
 
 def import_data():
@@ -64,5 +63,12 @@ def import_data():
     for b in tmp:
         all += symetries_rotations(b)
     X = [x[:-2] for x in all]
-    Y = [np.concatenate((y[-2].reshape((81,)), [y[-1]])) for y in all]
-    return np.array([reshape(x, len_hist) for x in X]), np.array(Y)
+    Y1 = [np.concatenate((y[-3].reshape((81,)), [y[-2]])) for y in all]
+    Y2 = [y[-1] for y in all]
+    return np.array([np.array(x).reshape((9,9,-1)) for x in X]), np.array(Y1), np.array(Y2)
+
+x, y1, y2 = import_data()
+
+print(x.shape)
+print(y1.shape)
+print(y2.shape)
