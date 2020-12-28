@@ -144,8 +144,8 @@ def import_data():
 ################################################################################
 
 if __name__ == "__main__":
-    collect_data()
+    # collect_data()
 
-    # X, Y = import_data()
-    # print(X.shape)
-    # print(Y.shape)
+    X, Y = import_data()
+    print(X.shape)
+    print(Y.shape)
