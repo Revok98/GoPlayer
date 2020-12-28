@@ -1,30 +1,19 @@
 import numpy as np
 import Goban
+import json
 
 
 def get_raw_data_go():
     ''' Returns the set of samples from the local file'''
-    import json
-
     raw_samples_file = "data/data.json"
-
     with open(raw_samples_file, "r") as f:
         data = json.loads(f.read())
     return data
 
 rejected = 0
 
-def encoder(data):
-    global rejected
-    board = Goban.Board()
-    moves = data["list_of_moves"]
+def board_encoding(board):
     boards = list()
-    for i in range(len(moves)) :
-        try:
-            board.push(board.flatten(board.name_to_coord(moves[i])))
-        except Exception as var:
-            rejected += 1
-            return list()
     B = np.zeros((9, 9))
     W = np.zeros((9, 9))
     for x in range(9):
@@ -35,8 +24,21 @@ def encoder(data):
             elif c == board._WHITE:
                 W[x,y] = 1
     boards += [B,W]
-    if len(moves) % 2 == 0: boards.append(np.zeros((9,9)))
+    if board._nextPlayer == board._BLACK: boards.append(np.zeros((9,9)))
     else: boards.append(np.ones((9,9)))
+    return boards
+
+def encoder(data):
+    global rejected
+    board = Goban.Board()
+    moves = data["list_of_moves"]
+    for i in range(len(moves)) :
+        try:
+            board.push(board.flatten(board.name_to_coord(moves[i])))
+        except Exception as var:
+            rejected += 1
+            return list()
+    boards = board_encoding(board)
     boards.append(np.array(data["proba_next_move"][:-1]).reshape((9,9)))
     boards.append(data["proba_next_move"][-1])
     boards.append(data["proba_win"])
@@ -72,3 +74,35 @@ x, y1, y2 = import_data()
 print(x.shape)
 print(y1.shape)
 print(y2.shape)
+# data = list()
+#
+# with open("data/data.json", "r") as f:
+#     tmp = json.loads(f.read())
+#     for d in tmp:
+#         new = dict()
+#         new["list_of_moves"] = d["list_of_moves"]
+#         new["proba_win"] = d["black_wins"] / d["rollouts"] if d["player"] == "black" else d["white_wins"] / d["rollouts"]
+#         new["proba_next_move"] = np.array(d["proba_wins"]).reshape((81,)).tolist() + [d["proba_win_pass"]]
+#         new["player"] = d["player"]
+#         data.append(new)
+# with open("data/data2.json", "r") as f:
+#     tmp = json.loads(f.read())
+#     for d in tmp:
+#         new = dict()
+#         new["list_of_moves"] = d["list_of_moves"]
+#         new["proba_win"] = d["black_wins"] / d["rollouts"] if d["player"] == "black" else d["white_wins"] / d["rollouts"]
+#         new["proba_next_move"] = np.array(d["proba_wins"]).reshape((81,)).tolist() + [d["proba_win_pass"]]
+#         new["player"] = d["player"]
+#         data.append(new)
+# with open("data/data_1.json", "r") as f:
+#     tmp = json.loads(f.read())
+#     for d in tmp:
+#         new = dict()
+#         new["list_of_moves"] = d["list_of_moves"]
+#         new["proba_win"] = d["black_wins"] / d["rollouts"] if d["player"] == "black" else d["white_wins"] / d["rollouts"]
+#         new["proba_next_move"] = np.array(d["winning_proba"]).reshape((81,)).tolist() + [d["proba_win_pass"]]
+#         new["player"] = d["player"]
+#         data.append(new)
+#
+# with open("data/data_all.json", "w") as f:
+#     json.dump(data, f)
