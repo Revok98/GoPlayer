@@ -48,7 +48,7 @@ def monte_carlo(gnugo, moves, nbsamples = 100):
                 else:
                     m = str(chr(ord('@')+line))+str(column)
                 firstmove = m
-                print(m)
+                # print(m)
                 isfirstmove = False
             else:
                 m = moves.get_randomized_best()
@@ -145,5 +145,5 @@ def doit():
 # 15 minutes max par run avant de lancer le dernier
 import time
 t=time.time()
-while (time.time() - t < 20*60*60): # une heure
+while (time.time() - t < 2*60*60): # une heure
     doit()

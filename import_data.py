@@ -69,41 +69,15 @@ def import_data():
     Y2 = [y[-1] for y in all]
     return np.array([np.array(x).reshape((9,9,-1)) for x in X]), np.array(Y1), np.array(Y2)
 
-# x, y1, y2 = import_data()
-#
-# print(x.shape)
-# print(y1.shape)
-# print(y2.shape)
+x, y1, y2 = import_data()
+print(x.shape)
+print(y1.shape)
+print(y2.shape)
+
 # data = list()
-#
+# with open("data/new_data.json", "r") as f:
+#     data = json.loads(f.read())
 # with open("data/old_data.json", "r") as f:
-#     tmp = json.loads(f.read())
-#     for d in tmp:
-#         new = dict()
-#         new["list_of_moves"] = d["list_of_moves"]
-#         new["proba_win"] = d["black_wins"] / d["rollouts"] if d["player"] == "black" else d["white_wins"] / d["rollouts"]
-#         new["proba_next_move"] = np.array(d["proba_wins"]).reshape((81,)).tolist() + [d["proba_win_pass"]]
-#         new["player"] = d["player"]
-#         data.append(new)
-# with open("data/old_data2.json", "r") as f:
-#     tmp = json.loads(f.read())
-#     for d in tmp:
-#         new = dict()
-#         new["list_of_moves"] = d["list_of_moves"]
-#         new["proba_win"] = d["black_wins"] / d["rollouts"] if d["player"] == "black" else d["white_wins"] / d["rollouts"]
-#         new["proba_next_move"] = np.array(d["proba_wins"]).reshape((81,)).tolist() + [d["proba_win_pass"]]
-#         new["player"] = d["player"]
-#         data.append(new)
-# with open("data/old_data_1.json", "r") as f:
-#     tmp = json.loads(f.read())
-#     for d in tmp:
-#         new = dict()
-#         new["list_of_moves"] = d["list_of_moves"]
-#         new["proba_win"] = d["black_wins"] / d["rollouts"] if d["player"] == "black" else d["white_wins"] / d["rollouts"]
-#         tmp_next_move = [float(item) for sublist in d["winning_proba"] for item in sublist]
-#         new["proba_next_move"] = tmp_next_move + [float(d["proba_win_pass"])]
-#         new["player"] = d["player"]
-#         data.append(new)
-#
+#     data += json.loads(f.read())
 # with open("data/data.json", "w") as f:
 #     json.dump(data, f)
