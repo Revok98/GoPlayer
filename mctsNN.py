@@ -7,90 +7,68 @@ import sys
 from tensorflow import keras
 from import_data import board_encoding
 
+
 class MCTS:
-    def __init__(self, game, father=None, move=None, prior=np.inf):
-        self.children = list()
-        self.game_over = game.is_game_over()
-        self.untried_moves = game.legal_moves() if not self.game_over else list()
+    def __init__(self, game, father=None, move=None, prior=0):
         self.father = father
-        self.n_wins = 0
-        self.n_rollout = 0
+        self.children = list()
         self.move = move
-        self.prior = prior
+        self.N = 0
+        self.W = 0
+        self.Q = 0
+        self.P = prior
+
+    def is_leaf(self):
+        return len(self.children) == 0
 
     def is_root(self):
         return self.father == None
 
-    def is_leaf(self):
-        return self.n_rollout == 0
-
-    def best_child(self):
-        max = -1
-        best = None
-        #l = list()
-        for child in self.children:
-        #    l.append(child.n_wins / child.n_rollout)
-            if child.n_wins / child.n_rollout > max:
-                best = child
-                max = child.n_wins / child.n_rollout
-        #print(f"best move {best.move}: {max} = {best.n_wins} / {best.n_rollout} probability to win")
-        #print(l)
-        return best
-
-    def value(self):
-        if self.n_rollout == 0:
-            return self.prior
-        return self.n_wins / self.n_rollout + np.sqrt(2 * np.log(self.father.n_rollout/self.n_rollout))
+    def U(self):
+        return P * np.sqrt(self.father.N / self.N)
 
     def selection(self, game):
         if not self.is_root():
             game.push(self.move)
-        # s'il reste des coups à explorer
-        if len(self.untried_moves) != 0:
+        if self.is_leaf():
             return self
-        # sinon, choisir le meilleur selon UCB
         if not self.game_over:
-            c = np.argmax([n.value() for n in self.children])
+            c = np.argmax([n.Q + n.U() for n in self.children])
             return self.children[c].selection(game)
         return self
 
-    def expansion(self, game, nn_priors):
-        if len(self.untried_moves) != 0:
-            priors = nn_priors.predict(np.array([board_encoding(game)]))[0] # TODO: non testé!!
-            for move in range(82):
-                if move in self.untried_moves:
-                    game.push(move)
-                    node = MCTS(game, self, move, priors[i])
-                    game.pop()
-                    self.children.append(node)
-                #return node
-                # rollout sur le noeud le plus prometteur ?
-        return self
-
-    def rollout(self, game, mycolor):
-        nbCoupsjoues = 0
-        while not game.is_game_over():
-            game.push(choice(game.legal_moves()))
-            nbCoupsjoues += 1
-        (B, W) = game.compute_score()
-        for _ in range(nbCoupsjoues):
+    def expansion(self, game, nn_priors, nn_values):
+        P = nn_priors.predict(np.array([board_encoding(game)]))[0] # TODO: non testé!!
+        V = nn_values.predict(np.array([board_encoding(game)]))[0] # TODO: non testé!!
+        for move in game.legal_moves():
+            game.push(move)
+            node = MCTS(game, self, move, P[i])
             game.pop()
-        if B == W:
-            return 0.5
-        if B > W:
-            if mycolor == game._BLACK:
-                return 1
-            return 0
-        if mycolor == game._WHITE:
-            return 1
-        return 0
+            self.children.append(node)
+        return V
 
-    def backpropagate(self, game, reward):
-        self.n_rollout += 1
-        self.n_wins += reward
-        if not self.is_root():
-            game.pop()
-            self.father.backpropagate(game, reward)
+    def back(self, V):
+        self.N = N + 1
+        self.W = W + V
+        self.Q = self.W / self.N
+        if self.father != None:
+            self.father.back(V)
+
+    def select_move_deterministically(self):
+        best = self.children[0]
+        for i in range(1, len(self.children)):
+            if self.children[i].N > best.N:
+                best = self.children[i]
+        return best.move
+
+    def select_move_stochastically(self):
+        s = sum([c.N for c in self.children])
+        r = np.random.randint(s)
+        s = 0
+        for child in self.children:
+            s += child.N
+            if s > r:
+                return child.move
 
 class MCTS_TREE:
     def __init__(self, game):
@@ -102,10 +80,9 @@ class MCTS_TREE:
         for _ in range(iterations):
             #game = original_game.copy()
             n = self.root.selection(game)
-            n = n.expansion(game, self.nn_priors)
-            reward = n.rollout(game, color)
-            n.backpropagate(game, reward)
-        return self.root.best_child().move
+            v = n.expansion(game, self.nn_priors, self.nn_values)
+            n.backpropagate(game, v)
+        return self.root.select_move_deterministically()
 
     def relocate_root(self, game, move):
         for c in self.root.children:

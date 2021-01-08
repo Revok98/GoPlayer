@@ -41,7 +41,7 @@ def encoder(data):
     boards = board_encoding(board)
     boards.append(np.array(data["proba_next_move"][:-1]).reshape((9,9)))
     boards.append(data["proba_next_move"][-1])
-    boards.append(data["proba_win"])
+    boards.append(2*data["proba_win"]-1)
     return boards
 
 def symetries_rotations(x):
@@ -69,10 +69,10 @@ def import_data():
     Y2 = [y[-1] for y in all]
     return np.array([np.array(x).reshape((9,9,-1)) for x in X]), np.array(Y1), np.array(Y2)
 
-x, y1, y2 = import_data()
-print(x.shape)
-print(y1.shape)
-print(y2.shape)
+# x, y1, y2 = import_data()
+# print(x.shape)
+# print(y1.shape)
+# print(y2.shape)
 
 # data = list()
 # with open("data/new_data.json", "r") as f:
