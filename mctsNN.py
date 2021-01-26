@@ -49,9 +49,9 @@ class MCTS:
             if mycolor == game._WHITE:
                 return 1
             return -1
-        x = np.array(board_encoding(game, liberties=3)).reshape(9,9,6)
+        x = board_encoding(game, liberties=3)
         P = nn_priors.predict(np.array([x]))[0]
-        V = nn_values.predict(np.array([x]))[0]
+        V = nn_values.predict(np.array([x]))[0,0]
         for move in game.legal_moves():
             game.push(move)
             node = MCTS(game, self, move, P[move])
