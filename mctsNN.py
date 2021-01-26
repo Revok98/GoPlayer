@@ -13,7 +13,7 @@ class MCTS:
         self.father = father
         self.children = list()
         self.move = move
-        self.N = 0
+        self.N = 1
         self.W = 0
         self.Q = 0
         self.P = prior
@@ -25,34 +25,47 @@ class MCTS:
         return self.father == None
 
     def U(self):
-        return P * np.sqrt(self.father.N / self.N)
+        return self.P * np.sqrt(self.father.N / self.N)
 
     def selection(self, game):
         if not self.is_root():
             game.push(self.move)
         if self.is_leaf():
             return self
-        if not self.game_over:
+        if not game.is_game_over():
             c = np.argmax([n.Q + n.U() for n in self.children])
             return self.children[c].selection(game)
         return self
 
-    def expansion(self, game, nn_priors, nn_values):
-        P = nn_priors.predict(np.array([board_encoding(game)]))[0] # TODO: non testé!!
-        V = nn_values.predict(np.array([board_encoding(game)]))[0] # TODO: non testé!!
+    def expansion(self, game, nn_priors, nn_values, mycolor):
+        if game.is_game_over():
+            B, W = game.compute_score()
+            if B == W:
+                return 0
+            if B > W:
+                if mycolor == game._BLACK:
+                    return 1
+                return -1
+            if mycolor == game._WHITE:
+                return 1
+            return -1
+        x = np.array(board_encoding(game, liberties=3)).reshape(9,9,6)
+        P = nn_priors.predict(np.array([x]))[0]
+        V = nn_values.predict(np.array([x]))[0]
         for move in game.legal_moves():
             game.push(move)
-            node = MCTS(game, self, move, P[i])
+            node = MCTS(game, self, move, P[move])
             game.pop()
             self.children.append(node)
         return V
 
-    def back(self, V):
-        self.N = N + 1
-        self.W = W + V
+    def back(self, V, game):
+        self.N = self.N + 1
+        self.W = self.W + V
         self.Q = self.W / self.N
-        if self.father != None:
-            self.father.back(V)
+        if not self.is_root():
+            game.pop()
+            self.father.back(V, game)
 
     def select_move_deterministically(self):
         best = self.children[0]
@@ -80,8 +93,8 @@ class MCTS_TREE:
         for _ in range(iterations):
             #game = original_game.copy()
             n = self.root.selection(game)
-            v = n.expansion(game, self.nn_priors, self.nn_values)
-            n.backpropagate(game, v)
+            v = n.expansion(game, self.nn_priors, self.nn_values, color)
+            n.back(v, game)
         return self.root.select_move_deterministically()
 
     def relocate_root(self, game, move):

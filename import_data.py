@@ -12,62 +12,73 @@ def get_raw_data_go():
 
 rejected = 0
 
-def board_encoding(board):
-    boards = list()
-    B = np.zeros((9, 9))
-    W = np.zeros((9, 9))
+def board_encoding(board, liberties=0):
+    boards = np.zeros((9,9,3+liberties))
     for x in range(9):
         for y in range(9):
             c = board._board[board.flatten((x,y))]
             if c == board._BLACK:
-                B[x,y] = 1
+                boards[x,y,0] = 1
             elif c == board._WHITE:
-                W[x,y] = 1
-    boards += [B,W]
-    if board._nextPlayer == board._BLACK: boards.append(np.zeros((9,9)))
-    else: boards.append(np.ones((9,9)))
+                boards[x,y,1] = 1
+            if liberties > 0:
+                l = min(board._stringLiberties[board.flatten((x,y))], liberties-1)
+                boards[x,y,l+2] = 1
+    if board._nextPlayer != board._BLACK:
+        boards[:,:,-1] = 1
     return boards
 
-def encoder(data):
+def encoder(data, h=5, liberties=0):
     global rejected
     board = Goban.Board()
     moves = data["list_of_moves"]
+    if len(moves) < h:
+        return None
+    b = np.zeros((9,9,h*(2+liberties)+1))
     for i in range(len(moves)) :
         try:
             board.push(board.flatten(board.name_to_coord(moves[i])))
         except Exception as var:
             rejected += 1
-            return list()
-    boards = board_encoding(board)
-    boards.append(np.array(data["proba_next_move"][:-1]).reshape((9,9)))
-    boards.append(data["proba_next_move"][-1])
-    boards.append(2*data["proba_win"]-1)
-    return boards
+            return None
+        if i >= len(moves) - h:
+            tmp = board_encoding(board, liberties)
+            b[:,:,(2+liberties)*(i-len(moves)+h):(2+liberties)*(i-len(moves)+h+1)] = tmp[:,:,:2+liberties]
+    if len(moves) % 2 == 1:
+        b[:,:,-1] = 1
+    #boards = board_encoding(board)
+    proba_move = np.array(data["proba_next_move"][:-1]).reshape((9,9))
+    proba_pass = data["proba_next_move"][-1]
+    proba_win = 2 * data["proba_win"] - 1
+    return b, proba_move, proba_pass, proba_win
 
 def symetries_rotations(x):
+    # input (9,9,k)
     new = list()
     new.append(x)
-    # [:-1] sauf le dernier car c'est pas un board, c'est PASS
-    new.append([np.flipud(b) for b in new[-1][:-2]] + new[-1][-2:])
-    new.append([np.rot90(b) for b in new[-2][:-2]] + new[-2][-2:])
-    new.append([np.flipud(b) for b in new[-1][:-2]] + new[-1][-2:])
-    new.append([np.rot90(b) for b in new[-2][:-2]] + new[-2][-2:])
-    new.append([np.flipud(b) for b in new[-1][:-2]] + new[-1][-2:])
-    new.append([np.rot90(b) for b in new[-2][:-2]] + new[-2][-2:])
-    new.append([np.flipud(b) for b in new[-1][:-2]] + new[-1][-2:])
+    new.append(np.flipud(new[-1]))
+    new.append(np.rot90(new[-2]))
+    new.append(np.flipud(new[-1]))
+    new.append(np.rot90(new[-2]))
+    new.append(np.flipud(new[-1]))
+    new.append(np.rot90(new[-2]))
+    new.append(np.flipud(new[-1]))
     return new
 
-def import_data():
+def import_data(historique=0, liberties=0):
     data = get_raw_data_go()
     all = list()
-    tmp = [x for x in [encoder(d) for d in data] if len(x) != 0]
+    tmp = [x for x in [encoder(d, historique, liberties) for d in data] if x is not None]
     print(f"{rejected} parties rejetées par le goban, reste {len(tmp)} parties")
-    for b in tmp:
-        all += symetries_rotations(b)
-    X = [x[:-2] for x in all]
-    Y1 = [np.concatenate((y[-3].reshape((81,)), [y[-2]])) for y in all]
-    Y2 = [y[-1] for y in all]
-    return np.array([np.array(x).reshape((9,9,-1)) for x in X]), np.array(Y1), np.array(Y2)
+    X = list()
+    Y1 = list()
+    Y2 = list()
+    for b, m, p, w in tmp:
+        X += symetries_rotations(b)
+        for t in symetries_rotations(m):
+            Y1.append(np.concatenate([np.array(t).reshape((81,)), [p]]))
+        Y2 += [w] * 8
+    return np.array(X), np.array(Y1), np.array(Y2)
 
 # x, y1, y2 = import_data()
 # print(x.shape)

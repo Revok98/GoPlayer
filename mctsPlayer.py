@@ -12,7 +12,7 @@ import random
 from playerInterface import *
 import numpy as np
 
-from mcts import MCTS_TREE
+from mctsNN import MCTS_TREE
 
 class myPlayer(PlayerInterface):
     ''' Example of a random player for the go. The only tricky part is to be able to handle
@@ -34,7 +34,7 @@ class myPlayer(PlayerInterface):
             return "PASS"
 
         start_time = time.time()
-        move = self.tree.apply_mcts(self._board, 150, self._mycolor)
+        move = self.tree.apply_mcts(self._board, 50, self._mycolor)
         print(f"time {time.time() - start_time}")
         self.tree.relocate_root(self._board, move)
 
