@@ -8,8 +8,8 @@ from tensorflow import keras
 from import_data import board_encoding
 
 
-class MCTS:
-    def __init__(self, game, father=None, move=None, prior=0):
+class MCTS_Node:
+    def __init__(self, father=None, move=None, prior=0):
         self.father = father
         self.children = list()
         self.move = move
@@ -54,7 +54,7 @@ class MCTS:
         V = nn_values.predict(np.array([x]))[0,0]
         for move in game.legal_moves():
             game.push(move)
-            node = MCTS(game, self, move, P[move])
+            node = MCTS_Node(self, move, P[move])
             game.pop()
             self.children.append(node)
         return V
@@ -74,7 +74,7 @@ class MCTS:
                 best = self.children[i]
         return best.move
 
-    def select_move_stochastically(self):
+    def select_move_stochastically(self, game):
         s = sum([c.N for c in self.children])
         r = np.random.randint(s)
         s = 0
@@ -85,22 +85,23 @@ class MCTS:
 
 class MCTS_TREE:
     def __init__(self, game):
-        self.root = MCTS(game)
+        self.root = MCTS_Node()
         self.nn_priors = keras.models.load_model('model/model_priors.h5')
         self.nn_values = keras.models.load_model('model/model_values.h5')
 
     def apply_mcts(self, game, iterations, color):
         for _ in range(iterations):
-            #game = original_game.copy()
             n = self.root.selection(game)
             v = n.expansion(game, self.nn_priors, self.nn_values, color)
             n.back(v, game)
         return self.root.select_move_deterministically()
 
-    def relocate_root(self, game, move):
+    def relocate_root(self, move):
         for c in self.root.children:
             if c.move == move:
                 self.root = c
                 self.root.father = None
                 self.root.move = None
-        self.root = MCTS(game)
+                return 
+        # si non trouvé, c'est un coup qui n'avait pas encore été exploré
+        self.root = MCTS_Node()

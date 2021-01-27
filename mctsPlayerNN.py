@@ -7,7 +7,7 @@ import random
 from playerInterface import *
 import numpy as np
 
-from mcts import MCTS_TREE
+from mctsNN import MCTS_TREE
 
 class myPlayer(PlayerInterface):
 
@@ -26,7 +26,7 @@ class myPlayer(PlayerInterface):
 
         start_time = time.time()
         move = self.tree.apply_mcts(self._board, 50, self._mycolor)
-        self.tree.relocate_root(self._board, move)
+        self.tree.relocate_root(move)
 
         self._board.push(move)
         return Goban.Board.flat_to_name(move)
@@ -34,7 +34,7 @@ class myPlayer(PlayerInterface):
     def playOpponentMove(self, move):
         move = Goban.Board.name_to_flat(move)
         self._board.push(move)
-        self.tree.relocate_root(self._board, move)
+        self.tree.relocate_root(move)
 
     def newGame(self, color):
         self._mycolor = color

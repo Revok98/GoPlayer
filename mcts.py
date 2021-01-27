@@ -103,4 +103,5 @@ class MCTS_TREE:
                 self.root = c
                 self.root.father = None
                 self.root.move = None
+                return
         self.root = MCTS(game)
