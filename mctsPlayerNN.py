@@ -1,11 +1,7 @@
 # -*- coding: utf-8 -*-
 
-import time
 import Goban
-from random import choice
-import random
 from playerInterface import *
-import numpy as np
 
 from mctsNN import MCTS_TREE
 
@@ -23,8 +19,6 @@ class myPlayer(PlayerInterface):
         if self._board.is_game_over():
             print("Referee told me to play but the game is over!")
             return "PASS"
-
-        start_time = time.time()
         move = self.tree.apply_mcts(self._board, 50, self._mycolor)
         self.tree.relocate_root(move)
 

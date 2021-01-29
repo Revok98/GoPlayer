@@ -74,7 +74,7 @@ class MCTS_Node:
                 best = self.children[i]
         return best.move
 
-    def select_move_stochastically(self, game):
+    def select_move_stochastically(self):
         s = sum([c.N for c in self.children])
         r = np.random.randint(s)
         s = 0
@@ -82,6 +82,7 @@ class MCTS_Node:
             s += child.N
             if s > r:
                 return child.move
+        return self.children[-1].move
 
 class MCTS_TREE:
     def __init__(self, game):
@@ -94,7 +95,8 @@ class MCTS_TREE:
             n = self.root.selection(game)
             v = n.expansion(game, self.nn_priors, self.nn_values, color)
             n.back(v, game)
-        return self.root.select_move_deterministically()
+        #return self.root.select_move_deterministically()
+        return self.root.select_move_stochastically() # meilleur pour l'entrainement
 
     def relocate_root(self, move):
         for c in self.root.children:
